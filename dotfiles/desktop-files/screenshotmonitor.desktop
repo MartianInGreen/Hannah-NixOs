@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Screenshot Monitor
+Exec=/home/hannah/.local/bin/screenshotmonitor
+Icon=/home/hannah/.local/share/icons/distrobox
+Categories=Utility;
+NoDisplay=false
+Terminal=true
