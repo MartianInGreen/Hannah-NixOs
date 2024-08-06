@@ -20,6 +20,9 @@ in
         # Languages
         go
 
+        # Tools
+        sqlitebrowser
+
         # Python packages
         my-python
     ];

@@ -1,0 +1,62 @@
+# Alacritty Configuration File
+
+# Window settings
+[window]
+dimensions = { columns = 80, lines = 24 }
+padding = { x = 2, y = 2 }
+decorations = "Full"
+
+# Font configuration
+[font]
+normal = { family = "JetBrains Mono", style = "Regular" }
+bold = { family = "JetBrains Mono", style = "Bold" }
+italic = { family = "JetBrains Mono", style = "Italic" }
+size = 11.0
+
+#zsh -ic "nsh; exec zsh"
+[shell]
+program = "zsh"
+args = ["-ic", "nsh; exec zsh"]
+
+# Colors (Gruvbox dark)
+[colors.primary]
+background = "#282828"
+foreground = "#ebdbb2"
+
+# Normal colors
+[colors.normal]
+black = "#282828"
+red = "#cc241d"
+green = "#98971a"
+yellow = "#d79921"
+blue = "#458588"
+magenta = "#b16286"
+cyan = "#689d6a"
+white = "#a89984"
+
+# Bright colors
+[colors.bright]
+black = "#928374"
+red = "#fb4934"
+green = "#b8bb26"
+yellow = "#fabd2f"
+blue = "#83a598"
+magenta = "#d3869b"
+cyan = "#8ec07c"
+white = "#ebdbb2"
+
+# Cursor settings
+[cursor]
+style = { shape = "Block", blinking = "On" }
+blink_interval = 750
+
+# Key bindings
+[[keyboard.bindings]]
+key = "V"
+mods = "Control|Shift"
+action = "Paste"
+
+[[keyboard.bindings]]
+key = "C"
+mods = "Control|Shift"
+action = "Copy"

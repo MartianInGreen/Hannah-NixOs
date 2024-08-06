@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=DevToys
+Exec=/home/hannah/.local/bin/DevToys.Linux
+Icon=/home/hannah/.local/share/icons/devtoys.png
+Categories=Utility;
+NoDisplay=false
+Terminal=false

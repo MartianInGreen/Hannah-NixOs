@@ -23,6 +23,9 @@ in
   services.timesyncd.enable = true;
 
   # Configure firewall
+  # Open TCP ports 80 and 443 for HTTP and HTTPS
+  # Open TCP 22 for SSH
+  # Open UDP 1714-1764 for KDE Connect
   networking.firewall = {
     enable = true;
     allowedTCPPorts = [ 80 443 ];
@@ -32,6 +35,12 @@ in
       iptables -A INPUT -p tcp --dport 22 -m state --state NEW -m recent --update --seconds 60 --hitcount 4 -j DROP
       iptables -A INPUT -p tcp --dport 22 -j ACCEPT
     '';
+    allowedTCPPortRanges = [
+      { from = 1714; to = 1764; } 
+    ];
+    allowedUDPPortRanges = [
+      { from = 1714; to = 1764; }
+    ];
   };
 
   # Configure SSH
@@ -84,7 +93,10 @@ in
   # Enable flakes
   nix = {
     package = pkgs.nixFlakes;
-    settings.experimental-features = [ "nix-command" "flakes"];
+    settings = {
+      experimental-features = [ "nix-command" "flakes"];
+      substituters = [ "https://aseipp-nix-cache.global.ssl.fastly.net" ]; # Use beta cache for faster downloads, when experiencing issues, disable it by commenting it out
+    };
   };
 
   # Set your time zone.
@@ -137,8 +149,6 @@ in
     my-python
     gitui
     waveterm
-    #devtoys
-    distrobox
 
     # Shell
     shell-gpt
@@ -187,6 +197,23 @@ in
   #   enable = true;
   #   systemCronJobs = [];
   # };
+
+  # Distrobox config
+  environment.etc."X11/xinit/xinitrc.d/50-xhost-local.sh" = {
+    text = ''
+      #!/bin/sh
+      xhost +si:localuser:$USER
+    '';
+    mode = "0755";
+  };
+
+  # NixOS garbage collection
+  nix.settings.auto-optimise-store = true;
+  nix.gc = {
+    automatic = true;
+    dates = "daily";
+    options = "--delete-older-than 7d";
+  };
 
   home-manager.backupFileExtension = "backup";
 

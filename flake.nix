@@ -40,7 +40,7 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-            home-manager.users.hannah = import ./home.nix;
+            home-manager.users.hannah = { config, ... }: import ./home.nix { inherit config pkgs; isServer = false; };
           }
         ];
         specialArgs = { inherit pkgs; };
@@ -65,7 +65,23 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-            home-manager.users.hannah = import ./home.nix;
+            home-manager.users.hannah = { config, ... }: import ./home.nix { inherit config pkgs; isServer = false; };
+          }
+        ];
+        specialArgs = { inherit pkgs; };
+      };
+      server = nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules = [
+          nix-flatpak.nixosModules.nix-flatpak
+
+          ./configuration.nix
+          ./devices/server.nix
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.hannah = { config, ... }: import ./home.nix { inherit config pkgs; isServer = true; };
           }
         ];
         specialArgs = { inherit pkgs; };

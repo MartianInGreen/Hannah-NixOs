@@ -1,15 +1,31 @@
-{ config, pkgs, ... }:
+{ config, pkgs, isServer, ... }:
 
 let 
-  username = "hannah";
-  gitName = "Hannah"; 
-  gitEmail = "hannah@rennersh.eu";
+  username = "username";
+  gitName = "gitname"; 
+  gitEmail = "git@email.com";
 in
 { 
   home.username = username;
   home.homeDirectory = "/home/${username}";
 
   home.packages = with pkgs; [
+    #
+    # Common Packages
+    #
+
+    # System
+    imagemagick
+    
+    # Distrobox
+    distrobox
+    xorg.xhost
+
+  ] ++ (if !isServer then [
+    #
+    # Desktop Packages
+    #
+
     # Basic Stuff
     flameshot
     nemo-with-extensions
@@ -30,10 +46,16 @@ in
     # Dev
     vscode
     gitAndTools.gh
+    alacritty
 
     # Personal 
     obsidian
-  ];
+  ] else [
+    #
+    # Server Packages
+    #
+  ]);
+
 
   programs.gh.enable = true;
 
@@ -54,8 +76,6 @@ in
     enable = true; 
     initExtra = builtins.readFile ./dotfiles/zsh/.zshrc;
   };
-
-  home.file.".p10k.zsh".text = builtins.readFile ./dotfiles/zsh/.p10k.zsh;
 
   # # GTK Theme
   # gtk = {
@@ -79,16 +99,29 @@ in
   # Dotfiles management
   # ------------------------------------------------
 
-  # Fastfetch
-  home.file.".config/fastfetch/config.jsonc".text = builtins.readFile ./dotfiles/fastfetch/config.jsonc;
-  home.file.".config/fastfetch/config-tiny.jsonc".text = builtins.readFile ./dotfiles/fastfetch/config-tiny.jsonc;
+  home.file = {
+    # p10k
+    ".p10k.zsh".text = builtins.readFile ./dotfiles/zsh/.p10k.zsh;
 
-  # Superfile
-  home.file.".config/superfile/config.toml".text = builtins.readFile ./dotfiles/superfile/config.toml;
-  home.file.".config/superfile/hotkeys.toml".text = builtins.readFile ./dotfiles/superfile/hotkeys.toml;
+    # Fastfetch
+    ".config/fastfetch/config.jsonc".text = builtins.readFile ./dotfiles/fastfetch/config.jsonc;
+    ".config/fastfetch/config-tiny.jsonc".text = builtins.readFile ./dotfiles/fastfetch/config-tiny.jsonc;
 
-  # Desktop files
-  home.file.".local/share/applications/screenshotmonitor.desktop".source = ./dotfiles/desktop-files/screenshotmonitor.desktop;
+    # Superfile
+    ".config/superfile/config.toml".text = builtins.readFile ./dotfiles/superfile/config.toml;
+    ".config/superfile/hotkeys.toml".text = builtins.readFile ./dotfiles/superfile/hotkeys.toml;
+  } // (if !isServer then {
+    # Alacritty
+    ".config/alacritty/alacritty.toml".text = builtins.readFile ./dotfiles/alacritty.toml;
+
+    # Desktop files
+    ".local/share/applications/screenshotmonitor.desktop".source = ./dotfiles/desktop-files/screenshotmonitor.desktop;
+    ".local/share/icons/screenshotmonitor.png".source = ./dotfiles/icons/time_space_icon.png;
+
+    ".local/share/applications/DevToys.desktop".source = ./dotfiles/desktop-files/DevToys.desktop;
+    ".local/share/icons/devtoys.png".source = ./dotfiles/icons/devtoys.png;
+  } else {});
+
 
   # This value determines the Home Manager release that your
   # configuration is compatible with. This helps avoid breakage

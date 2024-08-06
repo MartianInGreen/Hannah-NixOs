@@ -9,7 +9,10 @@
 
   # Enable NVIDIA drivers (Both xserver and wayland)
   services.xserver.videoDrivers = [ "nvidia" ];
-  hardware.graphics.enable = true;
+  hardware.graphics = {
+    enable = true;
+  };
+
   hardware.nvidia = {
     modesetting.enable = true;
     powerManagement.enable = true; # Fix sleep/suspend crashes

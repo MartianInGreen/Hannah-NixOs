@@ -2,4 +2,4 @@ result/
 result.*
 result
 
-scripts/obsidian-auto-tag.sh
+scripts/obsidian/obsidian-auto-tag.sh

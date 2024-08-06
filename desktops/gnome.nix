@@ -15,5 +15,6 @@
     gnomeExtensions.gsconnect
     gnomeExtensions.clipboard-indicator
     gnomeExtensions.ddterm
+    gnomeExtensions.toggle-alacritty
   ];
 }

@@ -9,7 +9,7 @@ text = """
 Custom Help & Cheat sheet
 --------------- Updates -------------------
 [bold]update[/bold] #flake-name - [dim]Updates the system with the given flake[/dim]
-[bold]update-full[/bold] #flake-name - [dim]Updates the system with the given flake, and updates the Distrobox enviorements.[/dim]
+[bold]update-full[/bold] #flake-name - [dim]Updates the flake.lock, system with the given flake, and updates the Distrobox enviorements.[/dim]
 [bold]update-scripts[/bold] - [dim]Updates the scripts in the .scripts folder[/dim]
 [bold]update-zsh[/bold] - [dim]Sources the current zshrc from the .nixos-config folder[/dim]
 [bold]push-config[/bold] - [dim]Pushes the current config to GitHub[/dim]

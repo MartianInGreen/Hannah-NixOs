@@ -293,7 +293,12 @@ update() {
 update-full() {
   local config_name="${1:-$(hostname)}"
 
+  echo "------------------------- Updating nix flake -------------------------"
+  # Updating the flake
+  nix flake update $HOME/.nixos-config
+  echo "------------------------- Updating nix -------------------------"
   update $config_name 
+  housekeep
   echo "------------------------- Distrobox Update -------------------------"
   update-distrobox.zsh
   echo "----------------------------------------------------------------"
