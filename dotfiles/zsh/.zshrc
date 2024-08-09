@@ -34,9 +34,14 @@ zinit light Aloxaf/fzf-tab
 # Add in snippets
 zinit snippet OMZP::git
 zinit snippet OMZP::sudo
-zinit snippet OMZP::archlinux
 zinit snippet OMZP::aws
 zinit snippet OMZP::command-not-found
+#zinit snippet OMZP::docker
+zinit snippet OMZP::docker-compose
+zinit snippet OMZP::npm
+zinit snippet OMZP::pip
+zinit snippet OMZP::python
+#zinit snippet OMZP::web-search
 
 # Load autocompletion
 autoload -U compinit && compinit
@@ -68,12 +73,16 @@ setopt hist_find_no_dups
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
 zstyle ':completion:*' list-colors '${(s.:.)LS_COLORS}'
 zstyle ':completion:*' menu no
-zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
-zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
+zstyle ':fzf-tab:complete:cd:*' fzf-preview 'exa -la --color=always $realpath'
+zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'exa -la --color=always $realpath'
+
+zstyle ':fzf-tab:*' switch-group ',' '.'
+zstyle ':fzf-tab:*' continuous-trigger 'tab'
+zstyle ':fzf-tab:*' single-group ''
 
 # Aliases 
-alias ls='ls --color'
-alias ll="ls -lah"
+alias ls='exa --color'
+alias ll="exa -lah"
 alias nsh="clear && cd && fastfetch && echo \"Shell-GPT enabled. Use 'sgpt' to ask questions or 'sgpt -s' to execute commands.\" $argv"
 alias nshu="update-zsh && clear && cd && fastfetch && echo \"Shell-GPT enabled. Use 'sgpt' to ask questions or 'sgpt -s' to execute commands.\" $argv"
 alias edit-config="code $HOME/.nixos-config"
@@ -83,6 +92,7 @@ alias ai="sgpt --model gpt-4o-mini"
 alias hrudl="~/.local/bin/screenshotmonitor"
 alias files="superfile"
 alias nshell="nix-shell $argv --command zsh"
+alias gpgu="gpg --homedir .secrets/ --pinentry-mode loopback"
 
 # Shell scripts aliases
 alias custom-help="./.scripts/custom-help.sh"
@@ -93,6 +103,8 @@ alias devtoys="$HOME/.local/bin/DevToys.Linux"
 
 # Shell variables
 export DISTROBOX_CUSTOM_HOME="$HOME/.containers"
+export GNUPGHOME="$HOME/.secrets/"
+export GPG_PINENTRY_MODE="loopback"
 
 # Modify Path
 PATH=$PATH:$HOME/.local/bin:$HOME/.scripts
@@ -208,6 +220,76 @@ push-config() {
 }
 
 # Update Function
+test-update() {
+    local config_name="${1:-$(hostname)}"
+    local timestamp=$(date "+%Y-%m-%d_%H:%M:%S")
+    local start_time=$(date +%s)
+
+    echo "------------------------- Managing Config Files -------------------------"
+
+    # Create directories if they don't exist
+    mkdir -p "$HOME/.nixos-backup"
+    mkdir -p "$HOME/.nixos-config"
+    mkdir -p "$HOME/.containers"
+    mkdir -p "$HOME/.local/bin"
+    mkdir -p "$HOME/.nixos-backup/$timestamp"
+    mkdir -p "$HOME/.scripts"
+    mkdir -p "$HOME/.secrets"
+    sudo chmod 700 "$HOME/.secrets"
+
+    # Check if .nixos-config is empty
+    if [ -z "$(ls -A "$HOME/.nixos-config")" ]; then
+        # Copy current config to .nixos-config
+        cp -r /etc/nixos/* "$HOME/.nixos-config/"
+        echo "Copied current config to .nixos-config, since it was not yet populated."
+        return
+    fi
+
+    # Copy current config to backup
+    echo "Backing up current config to .nixos-backup/$timestamp"
+    cp -r /etc/nixos/* $HOME/.nixos-backup/$timestamp/
+
+    # Copy new config to /etc/nixos
+    echo "Copying new config to /etc/nixos"
+    sudo rm -rf /etc/nixos/*
+    sudo cp -r $HOME/.nixos-config/* /etc/nixos/
+    # Managing hardware-configuration.nix
+    sudo cp $HOME/.nixos-config/hardware-conf/$(hostname)-hardware-configuration.nix /etc/nixos/hardware-configuration.nix
+
+    echo "------------------------- Building System Update -------------------------"
+
+    # Update nix
+    echo "Updating NixOS with config: $config_name"
+    sudo nixos-rebuild test --flake /etc/nixos#$config_name --max-jobs 8
+    echo "------------------------- System Update Summary -------------------------"
+    nvd diff /run/current-system ./result
+    echo "------------------------- Applying Update -------------------------"
+     # Save diff to update-summary.txt file inside the backup
+    nvd diff /run/current-system ./result > "$HOME/.nixos-backup/$timestamp/update-summary.txt"
+
+    # Cleanup
+    rm -rf $HOME/.nixos-config/result
+
+    local end_time=$(date +%s)
+    local duration=$((end_time - start_time))
+
+    echo "----------------------------------------------------------------"
+    echo "NixOS updated. Took $duration seconds."
+    echo "Saved update summary to $HOME/.nixos-backup/$timestamp/update-summary.txt"
+    echo "Remember to run any other setup/update scripts located in the .scripts folder if needed!"
+
+    # Check LAST_CONFIG_PUSH_TIMESTAMP when the config was last pushed to GitHub, if it's more than 24 hours ago, ask if the user wants to push the config to GitHub
+    if [ -n "$LAST_CONFIG_PUSH_TIMESTAMP" ] && [ "$(( $(date +%s) - $LAST_CONFIG_PUSH_TIMESTAMP ))" -gt 86400 ]; then
+        echo "It's been more than 24 hours since the last config push to GitHub."
+        echo -n "Do you want to push the config to GitHub? (y/n): "
+        read push_config
+        if [ "$push_config" = "y" ]; then
+            push-config
+        fi
+    fi
+}
+
+# Update Function
 update() {
     local config_name="${1:-$(hostname)}"
     local timestamp=$(date "+%Y-%m-%d_%H:%M:%S")
@@ -222,6 +304,93 @@ update() {
     mkdir -p "$HOME/.local/bin"
     mkdir -p "$HOME/.nixos-backup/$timestamp"
     mkdir -p "$HOME/.scripts"
+    mkdir -p "$HOME/.secrets"
+    sudo chmod 700 "$HOME/.secrets"
+
+    # Check if .nixos-config is empty
+    if [ -z "$(ls -A "$HOME/.nixos-config")" ]; then
+        # Copy current config to .nixos-config
+        cp -r /etc/nixos/* "$HOME/.nixos-config/"
+        echo "Copied current config to .nixos-config, since it was not yet populated."
+        return
+    fi
+
+    # Copy current config to backup
+    echo "Backing up current config to .nixos-backup/$timestamp"
+    cp -r /etc/nixos/* $HOME/.nixos-backup/$timestamp/
+
+    # Copy new config to /etc/nixos
+    echo "Copying new config to /etc/nixos"
+    sudo rm -rf /etc/nixos/*
+    sudo cp -r $HOME/.nixos-config/* /etc/nixos/
+    # Managing hardware-configuration.nix
+    sudo cp $HOME/.nixos-config/hardware-conf/$(hostname)-hardware-configuration.nix /etc/nixos/hardware-configuration.nix
+
+    echo "------------------------- Building System Update -------------------------"
+
+    # Update nix
+    echo "Updating NixOS with config: $config_name"
+    sudo nixos-rebuild build --upgrade --flake /etc/nixos#$config_name --max-jobs 8
+    echo "------------------------- System Update Summary -------------------------"
+    nvd diff /run/current-system ./result
+
+    # Ask for confirmation before applying the update
+    echo -n "Apply update? (Y/n) "
+    read -r response
+    if [[ "$response" =~ ^[Yy]$ ]] || [[ -z "$response" ]]; then
+        echo "Applying update..."
+    else
+        echo "Update cancelled."
+        return
+    fi    
+    echo "------------------------- Applying Update -------------------------"
+    sudo nixos-rebuild switch --flake /etc/nixos#$config_name --max-jobs 8
+
+    # Copy all scripts form the scripts folder to $HOME/.scripts
+    update-scripts
+
+    # Save diff to update-summary.txt file inside the backup
+    nvd diff /run/current-system ./result > "$HOME/.nixos-backup/$timestamp/update-summary.txt"
+
+    # Cleanup
+    rm -rf $HOME/.nixos-config/result
+
+    local end_time=$(date +%s)
+    local duration=$((end_time - start_time))
+
+    echo "----------------------------------------------------------------"
+    echo "NixOS updated. Took $duration seconds."
+    echo "Saved update summary to $HOME/.nixos-backup/$timestamp/update-summary.txt"
+    echo "Remember to run any other setup/update scripts located in the .scripts folder if needed!"
+
+    # Check LAST_CONFIG_PUSH_TIMESTAMP when the config was last pushed to GitHub, if it's more than 24 hours ago, ask if the user wants to push the config to GitHub
+    if [ -n "$LAST_CONFIG_PUSH_TIMESTAMP" ] && [ "$(( $(date +%s) - $LAST_CONFIG_PUSH_TIMESTAMP ))" -gt 86400 ]; then
+        echo "It's been more than 24 hours since the last config push to GitHub."
+        echo -n "Do you want to push the config to GitHub? (y/n): "
+        read push_config
+        if [ "$push_config" = "y" ]; then
+            push-config
+        fi
+    fi
+}
+
+# Update Function
+update() {
+    local config_name="${1:-$(hostname)}"
+    local timestamp=$(date "+%Y-%m-%d_%H:%M:%S")
+    local start_time=$(date +%s)
+
+    echo "------------------------- Managing Config Files -------------------------"
+
+    # Create directories if they don't exist
+    mkdir -p "$HOME/.nixos-backup"
+    mkdir -p "$HOME/.nixos-config"
+    mkdir -p "$HOME/.containers"
+    mkdir -p "$HOME/.local/bin"
+    mkdir -p "$HOME/.nixos-backup/$timestamp"
+    mkdir -p "$HOME/.scripts"
+    mkdir -p "$HOME/.secrets"
+    sudo chmod 700 "$HOME/.secrets"
 
     # Check if .nixos-config is empty
     if [ -z "$(ls -A "$HOME/.nixos-config")" ]; then

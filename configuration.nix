@@ -28,7 +28,7 @@ in
   # Open UDP 1714-1764 for KDE Connect
   networking.firewall = {
     enable = true;
-    allowedTCPPorts = [ 80 443 ];
+    allowedTCPPorts = [ 80 443 53317 ];
     allowedUDPPorts = [ ];
     extraCommands = ''
       iptables -A INPUT -p tcp --dport 22 -m state --state NEW -m recent --set
@@ -81,11 +81,14 @@ in
   # Define your username
   users.users.hannah = {
     isNormalUser = true;
-    extraGroups = [ "wheel" "docker" ]; # Enable 'sudo' for the user.
+    extraGroups = [ "wheel" "docker" "libvirtd" ]; # Enable 'sudo' for the user.
   };
   users.defaultUserShell = pkgs.zsh;
   programs.fish.enable = true;
   programs.zsh.enable = true; 
+
+  # KDE Connect
+  #programs.kdeconnect.enable = true;
 
   # Allow unfree packages (needed for NVIDIA drivers)
   nixpkgs.config.allowUnfree = true;
@@ -108,10 +111,28 @@ in
   # Virtualization
   virtualisation.docker.enable = true;
 
+  virtualisation.libvirtd = {
+    enable = true;
+    qemu = {
+      package = pkgs.qemu_kvm;
+      runAsRoot = true;
+      swtpm.enable = true;
+      ovmf = {
+        enable = true;
+        packages = [(pkgs.OVMF.override {
+          secureBoot = true;
+          tpmSupport = true;
+        }).fd];
+      };
+    };
+  };
+
   # Package managers
   services.flatpak.enable = true;
   services.flatpak.packages = [
     "me.iepure.devtoolbox"
+    "io.missioncenter.MissionCenter"
+    "com.hunterwittenborn.Celeste"
   ];
 
   # System packages
@@ -143,6 +164,11 @@ in
     nvd
     pciutils
     usbutils
+    gnupg
+    pinentry
+    eza
+    rclone
+    localsend
 
     # Dev
     python3
@@ -198,6 +224,19 @@ in
   #   systemCronJobs = [];
   # };
 
+  # PGP keys
+  programs.gnupg.agent = {
+    enable = true; 
+    enableSSHSupport = true;
+    pinentryPackage = pkgs.pinentry-curses;
+  };
+
+  environment.sessionVariables = {
+    #GPG_TTY = "$(tty)";
+    GNUPGHOME = "$HOME/.secrets";
+    GPG_PINENTRY_MODE = "loopback";
+  };
+
   # Distrobox config
   environment.etc."X11/xinit/xinitrc.d/50-xhost-local.sh" = {
     text = ''
@@ -216,6 +255,15 @@ in
   };
 
   home-manager.backupFileExtension = "backup";
+
+  # Current packages file
+  environment.etc."current-system-packages".text =
+  let
+    packages = builtins.map (p: "${p.name}") config.environment.systemPackages;
+    sortedUnique = builtins.sort builtins.lessThan (pkgs.lib.lists.unique packages);
+    formatted = builtins.concatStringsSep "\n" sortedUnique;
+  in
+    formatted;
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions

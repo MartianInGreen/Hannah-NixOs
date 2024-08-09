@@ -1,9 +1,10 @@
 { config, pkgs, isServer, ... }:
 
 let 
-  username = "username";
-  gitName = "gitname"; 
-  gitEmail = "git@email.com";
+  username = "hannah";
+  gitName = "MartianInGreen"; 
+  gitEmail = "github@rennersh.eu";
+  keyID = "EFBEF921499D8E20";
 in
 { 
   home.username = username;
@@ -21,6 +22,9 @@ in
     distrobox
     xorg.xhost
 
+    # Dev
+    gitAndTools.gh
+
   ] ++ (if !isServer then [
     #
     # Desktop Packages
@@ -30,6 +34,7 @@ in
     flameshot
     nemo-with-extensions
     protonvpn-gui
+    qalculate-gtk
 
     # Web
     firefox
@@ -45,8 +50,10 @@ in
 
     # Dev
     vscode
-    gitAndTools.gh
     alacritty
+    peazip
+    ventoy-full
+    virt-manager
 
     # Personal 
     obsidian
@@ -70,6 +77,11 @@ in
     enable = true;
     userName = gitName;
     userEmail = gitEmail;
+    extraConfig = {
+      user.signingkey = keyID;
+      commit.gpgsign = true;
+      gpg.homedir = "$HOME/.secrets";
+    };
   };
 
   programs.zsh = {
@@ -110,9 +122,27 @@ in
     # Superfile
     ".config/superfile/config.toml".text = builtins.readFile ./dotfiles/superfile/config.toml;
     ".config/superfile/hotkeys.toml".text = builtins.readFile ./dotfiles/superfile/hotkeys.toml;
+
+    # Package version
+    ".current-user-packages".text =
+      let
+        packages = builtins.map (p: "${p.name}") config.home.packages;
+        sortedUnique = builtins.sort builtins.lessThan (pkgs.lib.lists.unique packages);
+        formatted = builtins.concatStringsSep "\n" sortedUnique;
+      in
+        formatted;
+    
   } // (if !isServer then {
     # Alacritty
     ".config/alacritty/alacritty.toml".text = builtins.readFile ./dotfiles/alacritty.toml;
+
+    # Nemo (File Manager) Actions
+    ".local/share/nemo/actions/peazip.nemo_action".source = ./dotfiles/nemo/peazip.nemo_action;
+    ".local/share/nemo/actions/alacritty.nemo_action".source = ./dotfiles/nemo/alacritty.nemo_action;
+
+    # Cosmic
+    "./home/hannah/.config/cosmic/com.system76.CosmicComp/v1/xkb_config".source = ./dotfiles/cosmic/xkb_config;
+    "./home/hannah/.config/cosmic/com.system76.CosmicSettings.Shortcuts/v1/custom".source = ./dotfiles/cosmic/keys_custom;
 
     # Desktop files
     ".local/share/applications/screenshotmonitor.desktop".source = ./dotfiles/desktop-files/screenshotmonitor.desktop;

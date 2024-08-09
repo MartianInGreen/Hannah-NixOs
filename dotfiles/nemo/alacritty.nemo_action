@@ -1,0 +1,9 @@
+[Nemo Action]
+Name=Open in Alacritty
+Comment=Open the current folder in Alacritty terminal
+Exec=alacritty --working-directory %F
+Icon-Name=utilities-terminal
+Selection=None
+Extensions=any;
+Quote=double
+Dependencies=alacritty;

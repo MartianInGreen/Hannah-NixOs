@@ -1,0 +1,7 @@
+[Nemo Action]
+Name=Open with PeaZip
+Comment=Open the current directory with PeaZip
+Exec=peazip %F
+Icon-Name=peazip
+Selection=None
+Extensions=dir;

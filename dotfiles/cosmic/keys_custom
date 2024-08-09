@@ -1,0 +1,13 @@
+{
+    (
+        modifiers: [
+            Super,
+        ],
+        key: "t",
+    ): Spawn("alacritty"),
+    (
+        modifiers: [],
+        key: "XF86Calculator",
+        description: Some("Calculator"),
+    ): Spawn("qalculate-gtk"),
+}

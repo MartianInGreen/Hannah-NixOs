@@ -25,6 +25,9 @@ Custom Help & Cheat sheet
 [bold]ubuntu[/bold] - [dim]Enters the Ubuntu container[/dim]
 --------------- Tools -------------------
 [bold]lines-of-code[/bold] filetype - [dim]Prints the number of lines of code in the given file type in this directory and all subdirectories.[/dim]
+--------------- Notes -------------------
+[bold]GPG notes: [\bold] Use gpg [red] --pinentry-mode loopback [/red] --full-generate-key --homedir ~/.secrets [dim] - This fixes the \"no pinetree\" issue.[/dim]
+-> Use the [bold]gpgu[/bold] alias to use with correct home dir.
 """
 
 print(text)
